@@ -6,7 +6,7 @@ server {
     listen [::]:80 default_server;
 
     # Raiz do projeto (ajuste se necessário)
-    root /var/www/sistema-login;
+    root /var/www/redes-server-web-debian;
 
     index index.html index.php;
 
