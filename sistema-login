@@ -1,0 +1,51 @@
+# /etc/nginx/sites-available/sistema-login
+# Configuração Nginx para o sistema de cadastro/login em PHP
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    # Raiz do projeto (ajuste se necessário)
+    root /var/www/sistema-login;
+
+    index index.html index.php;
+
+    # Substitua _ pelo seu domínio ou IP em produção
+    server_name _;
+
+    # Redireciona / para index.html
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Processa arquivos PHP via php-fpm
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_intercept_errors on;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+
+        # Cabeçalhos de segurança
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options "SAMEORIGIN";
+        add_header X-XSS-Protection "1; mode=block";
+    }
+
+    # Bloqueia acesso direto ao config.php
+    location = /config.php {
+        deny all;
+        return 403;
+    }
+
+    # Nega acesso a arquivos ocultos
+    location ~ /\. {
+        deny all;
+    }
+
+    # Cache para assets estáticos
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 30d;
+        log_not_found off;
+    }
+}

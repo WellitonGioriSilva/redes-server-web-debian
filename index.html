@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════
+           RESET & VARIÁVEIS
+        ═══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #0b0b12;
+            --surface:   #14141f;
+            --border:    rgba(255,255,255,.08);
+            --accent:    #7c6af7;
+            --accent-lt: #a594f9;
+            --danger:    #f87171;
+            --success:   #4ade80;
+            --text:      #e4e4f0;
+            --muted:     #7878a0;
+            --input-bg:  rgba(255,255,255,.05);
+            --radius:    14px;
+            --trans:     .25s ease;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+        }
+
+        /* ═══════════════════════════════════════
+           FUNDO ANIMADO
+        ═══════════════════════════════════════ */
+        .bg-orbs {
+            position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: .18;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #7c6af7; top: -150px; left: -150px; animation-delay: 0s; }
+        .orb-2 { width: 400px; height: 400px; background: #c084fc; bottom: -100px; right: -80px;  animation-delay: -4s; }
+        .orb-3 { width: 300px; height: 300px; background: #38bdf8; top: 40%;  left: 60%; animation-delay: -8s; }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(40px, 30px) scale(1.08); }
+        }
+
+        /* ═══════════════════════════════════════
+           LAYOUT CENTRAL
+        ═══════════════════════════════════════ */
+        .page {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) + 4px);
+            padding: 2.5rem 2.75rem;
+            width: 100%;
+            max-width: 430px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.45);
+            animation: slideUp .45s ease both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ═══════════════════════════════════════
+           LOGO / CABEÇALHO
+        ═══════════════════════════════════════ */
+        .brand {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .brand-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--accent), #c084fc);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+        }
+        .brand h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.65rem;
+            letter-spacing: -.02em;
+        }
+        .brand p {
+            color: var(--muted);
+            font-size: .875rem;
+            margin-top: .3rem;
+        }
+
+        /* ═══════════════════════════════════════
+           TABS
+        ═══════════════════════════════════════ */
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,.04);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 1.75rem;
+            gap: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: .55rem;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--muted);
+            font-family: inherit;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--trans), color var(--trans);
+        }
+        .tab.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* ═══════════════════════════════════════
+           FORMULÁRIOS
+        ═══════════════════════════════════════ */
+        .form-section { display: none; }
+        .form-section.active { display: block; animation: fadeIn .3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .field { margin-bottom: 1.1rem; }
+        .field label {
+            display: block;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: .4rem;
+        }
+        .field input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: .7rem 1rem;
+            color: var(--text);
+            font-family: inherit;
+            font-size: .95rem;
+            outline: none;
+            transition: border-color var(--trans), box-shadow var(--trans);
+        }
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124,106,247,.18);
+        }
+        .field input::placeholder { color: var(--muted); opacity: .7; }
+
+        /* Botão principal */
+        .btn {
+            width: 100%;
+            margin-top: .75rem;
+            padding: .8rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--trans), transform .15s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover { background: var(--accent-lt); }
+        .btn:active { transform: scale(.98); }
+        .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+        /* Spinner dentro do botão */
+        .btn .spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2.5px solid rgba(255,255,255,.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══════════════════════════════════════
+           MENSAGEM DE FEEDBACK
+        ═══════════════════════════════════════ */
+        .msg {
+            margin-top: 1rem;
+            padding: .75rem 1rem;
+            border-radius: 8px;
+            font-size: .875rem;
+            font-weight: 500;
+            display: none;
+            animation: fadeIn .25s ease;
+        }
+        .msg.ok    { background: rgba(74,222,128,.12); color: var(--success); border: 1px solid rgba(74,222,128,.3); }
+        .msg.erro  { background: rgba(248,113,113,.12); color: var(--danger);  border: 1px solid rgba(248,113,113,.3); }
+
+        /* ═══════════════════════════════════════
+           DIVISOR
+        ═══════════════════════════════════════ */
+        .divisor {
+            text-align: center;
+            color: var(--muted);
+            font-size: .8rem;
+            margin: 1.25rem 0 .75rem;
+            position: relative;
+        }
+        .divisor::before, .divisor::after {
+            content: '';
+            position: absolute;
+            top: 50%; width: 38%;
+            height: 1px;
+            background: var(--border);
+        }
+        .divisor::before { left: 0; }
+        .divisor::after  { right: 0; }
+
+        .link-troca {
+            display: block;
+            text-align: center;
+            color: var(--accent-lt);
+            font-size: .875rem;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .link-troca:hover { color: #fff; }
+
+        /* ═══════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════ */
+        @media (max-width: 500px) {
+            .card { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Fundo com orbs -->
+<div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<div class="page">
+    <div class="card">
+
+        <!-- Logo -->
+        <div class="brand">
+            <div class="brand-icon">🔐</div>
+            <h1>Sistema de Acesso</h1>
+            <p>Entre ou crie sua conta abaixo</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="trocarAba('login')">Entrar</button>
+            <button class="tab"        onclick="trocarAba('cadastro')">Cadastrar</button>
+        </div>
+
+        <!-- ── FORMULÁRIO LOGIN ── -->
+        <div id="sec-login" class="form-section active">
+            <form id="form-login" onsubmit="submitLogin(event)">
+                <div class="field">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" name="email"
+                           placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" name="senha"
+                           placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn" id="btn-login">
+                    <span class="txt-btn">Entrar na conta</span>
+                    <span class="spinner" id="spin-login"></span>
+                </button>
+            </form>
+            <div class="msg" id="msg-login"></div>
+
+            <div class="divisor">ou</div>
+            <span class="link-troca" onclick="trocarAba('cadastro')">Ainda não tem conta? Cadastre-se</span>
+        </div>
+
+        <!-- ── FORMULÁRIO CADASTRO ── -->
+        <div id="sec-cadastro" class="form-section">
+            <form id="form-cadastro" onsubmit="submitCadastro(event)">
+                <div class="field">
+                    <label for="cad-nome">Nome completo</label>
+                    <input type="text" id="cad-nome" name="nome"
+                           placeholder="João Silva" autocomplete="name" required>
+                </div>
+                <div class="field">
+                    <label for="cad-email">E-mail</label>
+                    <input type="email" id="cad-email" name="email"
+                           placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="cad-senha">Senha (mín. 6 caracteres)</label>
+                    <input type="password" id="cad-senha" name="senha"
+                           placeholder="••••••••" autocomplete="new-password" required minlength="6">
+                </div>
+                <button type="submit" class="btn" id="btn-cad">
+                    <span class="txt-btn">Criar conta</span>
+                    <span class="spinner" id="spin-cad"></span>
+                </button>
+            </form>
+            <div class="msg" id="msg-cad"></div>
+
+            <div class="divisor">ou</div>
+            <span class="link-troca" onclick="trocarAba('login')">Já tem conta? Entrar</span>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* ─── Troca de abas ─── */
+function trocarAba(aba) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && aba === 'login') || (i === 1 && aba === 'cadastro'));
+    });
+    document.getElementById('sec-login').classList.toggle('active',    aba === 'login');
+    document.getElementById('sec-cadastro').classList.toggle('active', aba === 'cadastro');
+}
+
+/* ─── Helpers ─── */
+function setCarregando(btnId, spinId, ativo) {
+    const btn  = document.getElementById(btnId);
+    const spin = document.getElementById(spinId);
+    btn.disabled = ativo;
+    btn.querySelector('.txt-btn').style.display = ativo ? 'none'  : '';
+    spin.style.display                           = ativo ? 'block' : 'none';
+}
+
+function mostrarMsg(id, texto, tipo) {
+    const el = document.getElementById(id);
+    el.textContent = texto;
+    el.className = 'msg ' + tipo;
+    el.style.display = 'block';
+}
+
+/* ─── Login ─── */
+async function submitLogin(e) {
+    e.preventDefault();
+    setCarregando('btn-login', 'spin-login', true);
+
+    const dados = new FormData(e.target);
+    try {
+        const res  = await fetch('login.php', { method: 'POST', body: dados });
+        const json = await res.json();
+
+        if (json.ok) {
+            mostrarMsg('msg-login', '✓ ' + json.msg, 'ok');
+            setTimeout(() => window.location.href = 'painel.php', 700);
+        } else {
+            mostrarMsg('msg-login', json.msg, 'erro');
+            setCarregando('btn-login', 'spin-login', false);
+        }
+    } catch {
+        mostrarMsg('msg-login', 'Erro de conexão. Tente novamente.', 'erro');
+        setCarregando('btn-login', 'spin-login', false);
+    }
+}
+
+/* ─── Cadastro ─── */
+async function submitCadastro(e) {
+    e.preventDefault();
+    setCarregando('btn-cad', 'spin-cad', true);
+
+    const dados = new FormData(e.target);
+    try {
+        const res  = await fetch('cadastrar.php', { method: 'POST', body: dados });
+        const json = await res.json();
+
+        mostrarMsg('msg-cad', json.ok ? '✓ ' + json.msg : json.msg, json.ok ? 'ok' : 'erro');
+        if (json.ok) {
+            e.target.reset();
+            setTimeout(() => trocarAba('login'), 1800);
+        }
+    } catch {
+        mostrarMsg('msg-cad', 'Erro de conexão. Tente novamente.', 'erro');
+    } finally {
+        setCarregando('btn-cad', 'spin-cad', false);
+    }
+}
+</script>
+</body>
+</html>

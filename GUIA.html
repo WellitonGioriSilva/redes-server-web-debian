@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia: Nginx + PHP + MySQL + Sistema de Login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg: #0d0d14;
+  --surface: #13131e;
+  --card: #1a1a28;
+  --border: rgba(255,255,255,.08);
+  --accent: #6d5ef5;
+  --green: #22d3a5;
+  --yellow: #f5c842;
+  --red: #f56565;
+  --text: #dde1f0;
+  --muted: #7a7da0;
+  --code-bg: #0b0b14;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  line-height: 1.7;
+  padding: 2rem 1rem 4rem;
+}
+
+.wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ── HEADER ── */
+header {
+  text-align: center;
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+header .badge {
+  display: inline-block;
+  background: rgba(109,94,245,.18);
+  border: 1px solid rgba(109,94,245,.4);
+  color: #a89cf7;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .3rem .9rem;
+  border-radius: 99px;
+  margin-bottom: 1.2rem;
+}
+header h1 {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  margin-bottom: .6rem;
+}
+header h1 span { color: var(--accent); }
+header p {
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+/* ── TABLE OF CONTENTS ── */
+.toc {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 3rem;
+}
+.toc h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 1rem; }
+.toc ol { padding-left: 1.4rem; }
+.toc li { margin-bottom: .45rem; }
+.toc a { color: var(--accent); text-decoration: none; font-size: .92rem; }
+.toc a:hover { text-decoration: underline; }
+
+/* ── STEPS ── */
+.step {
+  margin-bottom: 3rem;
+  scroll-margin-top: 1.5rem;
+}
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.step-num {
+  width: 40px; height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+  font-weight: 800;
+  color: #fff;
+}
+.step-header h2 { font-size: 1.25rem; font-weight: 700; }
+
+.step p { color: #bbc0d8; margin-bottom: 1rem; font-size: .96rem; }
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid rgba(109,94,245,.25);
+  border-radius: 10px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+.code-label {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .45rem 1rem;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.copy-btn {
+  background: rgba(109,94,245,.18);
+  border: 1px solid rgba(109,94,245,.3);
+  color: #a89cf7;
+  padding: .2rem .65rem;
+  border-radius: 6px;
+  font-size: .72rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  transition: background .2s;
+}
+.copy-btn:hover { background: rgba(109,94,245,.35); }
+pre {
+  padding: 1.1rem 1.25rem;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem;
+  line-height: 1.75;
+  color: #c8d0f0;
+}
+pre .cm { color: #525880; }   /* comentário */
+pre .kw { color: #a89cf7; }   /* keyword SQL */
+pre .st { color: var(--green); } /* string */
+pre .prompt { color: var(--accent); user-select: none; }
+
+/* ── CALLOUT ── */
+.callout {
+  display: flex; gap: .75rem; align-items: flex-start;
+  border-radius: 10px;
+  padding: .9rem 1.1rem;
+  margin: 1rem 0;
+  font-size: .9rem;
+}
+.callout.tip   { background: rgba(34,211,165,.08); border: 1px solid rgba(34,211,165,.25); color: #6effd8; }
+.callout.warn  { background: rgba(245,200,66,.08);  border: 1px solid rgba(245,200,66,.25);  color: #ffe07a; }
+.callout.info  { background: rgba(109,94,245,.08);  border: 1px solid rgba(109,94,245,.25);  color: #b3aaff; }
+.callout-icon  { font-size: 1.1rem; line-height: 1; }
+
+/* ── FILE TREE ── */
+.tree {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem;
+  line-height: 1.9;
+  color: #b0b8d8;
+  margin: 1rem 0;
+}
+.tree .dir  { color: #a89cf7; font-weight: 700; }
+.tree .file { color: var(--green); }
+
+/* ── DIVIDER ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+/* ── FOOTER ── */
+footer { text-align: center; color: var(--muted); font-size: .82rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<header>
+  <div class="badge">Guia Completo · Debian / Ubuntu</div>
+  <h1>Nginx + PHP + MySQL<br><span>Sistema de Login</span></h1>
+  <p>Passo a passo para instalar o stack LEMP e subir um site completo de cadastro e login em PHP.</p>
+</header>
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>Índice</h2>
+  <ol>
+    <li><a href="#passo-1">Atualizar o sistema</a></li>
+    <li><a href="#passo-2">Instalar o Nginx</a></li>
+    <li><a href="#passo-3">Instalar o PHP 8.x</a></li>
+    <li><a href="#passo-4">Instalar o MySQL / MariaDB</a></li>
+    <li><a href="#passo-5">Criar o banco de dados</a></li>
+    <li><a href="#passo-6">Estrutura dos arquivos do site</a></li>
+    <li><a href="#passo-7">Configurar o Nginx para o site</a></li>
+    <li><a href="#passo-8">Copiar os arquivos e definir permissões</a></li>
+    <li><a href="#passo-9">Testar o sistema</a></li>
+  </ol>
+</nav>
+
+<!-- ═══ PASSO 1 ═══ -->
+<section class="step" id="passo-1">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <h2>Atualizar o sistema</h2>
+  </div>
+  <p>Antes de qualquer coisa, certifique-se que o sistema está atualizado.</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo apt update && sudo apt upgrade -y</pre>
+  </div>
+</section>
+
+<!-- ═══ PASSO 2 ═══ -->
+<section class="step" id="passo-2">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <h2>Instalar o Nginx</h2>
+  </div>
+  <p>Instale o Nginx e habilite-o para iniciar automaticamente com o sistema.</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo apt install nginx -y
+<span class="prompt">$ </span>sudo systemctl enable --now nginx</pre>
+  </div>
+  <p>Verifique se está rodando:</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo systemctl status nginx</pre>
+  </div>
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    Acesse <strong>http://IP-do-servidor</strong> no navegador — você deve ver a página padrão do Nginx.
+  </div>
+</section>
+
+<!-- ═══ PASSO 3 ═══ -->
+<section class="step" id="passo-3">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <h2>Instalar o PHP</h2>
+  </div>
+  <p>Instale o PHP-FPM e as extensões necessárias (PDO, MySQL, mbstring etc.).</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo apt install php-fpm php-mysql php-mbstring php-curl php-json -y</pre>
+  </div>
+  <p>Inicie e habilite o serviço (substitua <code>8.4</code> pela versão instalada):</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo systemctl enable --now php8.4-fpm
+<span class="cm"># Descubra a versão exata com:</span>
+<span class="prompt">$ </span>php -v</pre>
+  </div>
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    O socket do PHP-FPM fica em <code>/run/php/php-fpm.sock</code>. Se a sua versão do PHP for diferente de 8.4, ajuste o nome do serviço e o socket no arquivo de configuração do Nginx (passo 7).
+  </div>
+</section>
+
+<!-- ═══ PASSO 4 ═══ -->
+<section class="step" id="passo-4">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <h2>Instalar o MySQL / MariaDB</h2>
+  </div>
+  <p>Instale o MariaDB (100% compatível com MySQL) e execute o script de segurança inicial.</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo apt install mariadb-server -y
+<span class="prompt">$ </span>sudo systemctl enable --now mariadb
+<span class="prompt">$ </span>sudo mariadb-secure-installation</pre>
+  </div>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    No <code>mariadb-secure-installation</code>: pressione <kbd>Enter</kbd> para a senha root (se vazia), responda <strong>Y</strong> para todas as perguntas de segurança.
+  </div>
+</section>
+
+<!-- ═══ PASSO 5 ═══ -->
+<section class="step" id="passo-5">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <h2>Criar o banco de dados</h2>
+  </div>
+  <p>Conecte ao MariaDB como root e execute o script SQL do projeto.</p>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash) — entrar no MariaDB</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo mysql</pre>
+  </div>
+
+  <p>Dentro do prompt do MySQL, cole o conteúdo do arquivo <code>sql/banco.sql</code> (ou rode diretamente):</p>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>SQL — banco.sql</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="kw">CREATE DATABASE IF NOT EXISTS</span> sistema_login
+    <span class="kw">CHARACTER SET</span> utf8mb4 <span class="kw">COLLATE</span> utf8mb4_unicode_ci;
+
+<span class="kw">USE</span> sistema_login;
+
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> usuarios (
+    id         <span class="kw">INT UNSIGNED</span>  <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+    nome       <span class="kw">VARCHAR</span>(100)  <span class="kw">NOT NULL</span>,
+    email      <span class="kw">VARCHAR</span>(150)  <span class="kw">NOT NULL</span>,
+    senha      <span class="kw">VARCHAR</span>(255)  <span class="kw">NOT NULL</span>,
+    criado_em  <span class="kw">DATETIME</span>      <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span>,
+    <span class="kw">PRIMARY KEY</span> (id),
+    <span class="kw">UNIQUE KEY</span> uq_email (email)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cm">-- Usuário com acesso apenas a este banco</span>
+<span class="kw">CREATE USER IF NOT EXISTS</span> <span class="st">'appuser'</span>@<span class="st">'localhost'</span>
+    <span class="kw">IDENTIFIED BY</span> <span class="st">'SenhaForte123!'</span>;
+
+<span class="kw">GRANT</span> SELECT, INSERT, UPDATE, DELETE
+    <span class="kw">ON</span> sistema_login.* <span class="kw">TO</span> <span class="st">'appuser'</span>@<span class="st">'localhost'</span>;
+
+<span class="kw">FLUSH PRIVILEGES</span>;</pre>
+  </div>
+
+  <p>Ou rode o arquivo diretamente pelo terminal (após copiar para o servidor):</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo mysql &lt; /tmp/banco.sql</pre>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    Lembre-se de alterar <code>'SenhaForte123!'</code> para uma senha segura <strong>tanto no SQL quanto no arquivo <code>config.php</code></strong>.
+  </div>
+</section>
+
+<!-- ═══ PASSO 6 ═══ -->
+<section class="step" id="passo-6">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <h2>Estrutura dos arquivos do site</h2>
+  </div>
+  <p>Estes são todos os arquivos que compõem o sistema. Cada um está incluído no pacote que você baixou:</p>
+  <div class="tree">
+<span class="dir">projeto-login/</span>
+├── <span class="dir">public/</span>            ← raiz do site (servida pelo Nginx)
+│   ├── <span class="file">index.html</span>     ← página principal (formulário login/cadastro)
+│   ├── <span class="file">config.php</span>     ← configuração do banco de dados
+│   ├── <span class="file">cadastrar.php</span>  ← endpoint de cadastro (retorna JSON)
+│   ├── <span class="file">login.php</span>      ← endpoint de login (retorna JSON)
+│   ├── <span class="file">logout.php</span>     ← destroi sessão e redireciona
+│   └── <span class="file">painel.php</span>     ← página protegida (só acessa autenticado)
+├── <span class="dir">sql/</span>
+│   └── <span class="file">banco.sql</span>      ← script de criação do banco e tabelas
+└── <span class="dir">nginx-conf/</span>
+    └── <span class="file">sistema-login</span>  ← config do virtual host Nginx
+  </div>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    Antes de subir para o servidor, edite <code>public/config.php</code> e ajuste a senha (<code>DB_PASS</code>) para a mesma que você usou no <code>banco.sql</code>.
+  </div>
+</section>
+
+<!-- ═══ PASSO 7 ═══ -->
+<section class="step" id="passo-7">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <h2>Configurar o Nginx para o site</h2>
+  </div>
+  <p>Remova o virtual host padrão e crie um novo para o sistema de login.</p>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="cm"># Remove o virtual host padrão</span>
+<span class="prompt">$ </span>sudo rm /etc/nginx/sites-enabled/default
+
+<span class="cm"># Copia o arquivo de configuração do projeto</span>
+<span class="prompt">$ </span>sudo cp /tmp/projeto-login/nginx-conf/sistema-login \
+         /etc/nginx/sites-available/sistema-login
+
+<span class="cm"># Ativa o virtual host com um symlink</span>
+<span class="prompt">$ </span>sudo ln -s /etc/nginx/sites-available/sistema-login \
+              /etc/nginx/sites-enabled/sistema-login</pre>
+  </div>
+
+  <p>O conteúdo do arquivo de configuração do Nginx é:</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>nginx — sistema-login</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre>server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root /var/www/sistema-login;
+    index index.html index.php;
+    server_name _;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+    }
+
+    <span class="cm"># Bloqueia acesso direto ao config.php</span>
+    location = /config.php {
+        deny all;
+        return 403;
+    }
+
+    location ~ /\. { deny all; }
+}</pre>
+  </div>
+
+  <p>Teste a configuração e recarregue o Nginx:</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="prompt">$ </span>sudo nginx -t
+<span class="prompt">$ </span>sudo systemctl reload nginx</pre>
+  </div>
+</section>
+
+<!-- ═══ PASSO 8 ═══ -->
+<section class="step" id="passo-8">
+  <div class="step-header">
+    <div class="step-num">8</div>
+    <h2>Copiar os arquivos e definir permissões</h2>
+  </div>
+  <p>Crie o diretório de destino, copie os arquivos PHP/HTML e ajuste as permissões para o usuário do Nginx (<code>www-data</code>).</p>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="cm"># Cria o diretório raiz do site</span>
+<span class="prompt">$ </span>sudo mkdir -p /var/www/sistema-login
+
+<span class="cm"># Copia os arquivos da pasta public/ para o servidor</span>
+<span class="prompt">$ </span>sudo cp -r /tmp/projeto-login/public/* /var/www/sistema-login/
+
+<span class="cm"># Ajusta dono e permissões</span>
+<span class="prompt">$ </span>sudo chown -R www-data:www-data /var/www/sistema-login
+<span class="prompt">$ </span>sudo find /var/www/sistema-login -type f -exec chmod 640 {} \;
+<span class="prompt">$ </span>sudo find /var/www/sistema-login -type d -exec chmod 750 {} \;</pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <div>Se preferir, você pode transferir os arquivos via <strong>SFTP</strong> (ex.: FileZilla, WinSCP) direto para <code>/var/www/sistema-login/</code> e depois rodar apenas o <code>chown</code>.</div>
+  </div>
+</section>
+
+<!-- ═══ PASSO 9 ═══ -->
+<section class="step" id="passo-9">
+  <div class="step-header">
+    <div class="step-num">9</div>
+    <h2>Testar o sistema</h2>
+  </div>
+  <p>Tudo pronto! Abra o navegador e acesse <strong>http://IP-do-servidor</strong>.</p>
+
+  <div class="callout tip">
+    <span class="callout-icon">🚀</span>
+    <div>
+      <strong>Fluxo esperado:</strong><br>
+      1. Acesse a página → formulário de Login/Cadastro<br>
+      2. Clique em <em>Cadastrar</em>, preencha nome, e-mail e senha<br>
+      3. Após o cadastro, faça login com as mesmas credenciais<br>
+      4. Você será redirecionado para o <strong>Painel</strong> com seus dados<br>
+      5. Clique em <em>Sair da conta</em> para encerrar a sessão
+    </div>
+  </div>
+
+  <p>Se algo não funcionar, verifique os logs:</p>
+  <div class="code-wrap">
+    <div class="code-label"><span>Terminal (bash)</span><button class="copy-btn" onclick="copiar(this)">Copiar</button></div>
+    <pre><span class="cm"># Logs do Nginx</span>
+<span class="prompt">$ </span>sudo tail -f /var/log/nginx/error.log
+
+<span class="cm"># Status dos serviços</span>
+<span class="prompt">$ </span>sudo systemctl status nginx php8.4-fpm mariadb</pre>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    Em <strong>produção</strong>: use HTTPS (Certbot/Let's Encrypt), mova o <code>config.php</code> para fora do webroot, e troque as senhas de exemplo por senhas fortes e únicas.
+  </div>
+</section>
+
+<hr>
+
+<footer>
+  Guia gerado com base em <a href="https://alexshomenetwork.com/installing-wordpress-on-debian-13/" style="color:var(--accent)">alexshomenetwork.com</a> · Stack: Nginx + PHP-FPM + MariaDB · Debian 13 / Ubuntu
+</footer>
+
+</div>
+
+<script>
+function copiar(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  const texto = pre.innerText.replace(/^\$ /gm, '').trim();
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = orig, 1600);
+  });
+}
+</script>
+</body>
+</html>
